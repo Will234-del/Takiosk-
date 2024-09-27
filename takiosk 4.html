@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Takiosk</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: white;
+            color: black;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: yellow;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            margin: 0;
+        }
+        section {
+            padding: 20px;
+        }
+        .menu {
+            margin-bottom: 20px;
+        }
+        .contact {
+            text-align: center;
+            margin-top: 20px;
+        }
+        footer {
+            background-color: black;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+        .form-container, .comments-container, .orders-container {
+            margin: 20px 0;
+        }
+        button {
+            background-color: yellow;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: orange;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+        }
+        .comments-section, .orders-section {
+            margin-top: 20px;
+        }
+        .comment, .order {
+            margin: 5px 0;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .comment-date, .order-date {
+            font-size: 0.8em;
+            color: gray;
+        }
+        .delete-button {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+        }
+        .invoice {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .order-count {
+            font-weight: bold;
+        }
+        @media (max-width: 600px) {
+            .menu {
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Bienvenue au Takiosk</h1>
+        <p>Votre maison des saveurs</p>
+    </header>
+    <section>
+        <h2>Menu Tacos</h2>
+        <div class="menu">
+            <label><input type="radio" name="menu" value="Le Free - 1300f"> Le Free (1 viande) - 1300f</label><br>
+            <label><input type="radio" name="menu" value="Le Snap - 1500f"> Le Snap (1 tacos + double frite + sauce) - 1500f</label><br>
+            <label><input type="radio" name="menu" value="Le Banzaï - 2000f"> Le Banzaï (2 viandes, 2 tortillas) - 2000f</label>
+        </div>
+        
+        <h2>Suppléments</h2>
+        <div class="menu">
+            <label><input type="checkbox" name="suppléments" value="French fries - 500f"> French fries (double portion + sauce) - 500f</label><br>
+            <label><input type="checkbox" name="suppléments" value="Poulet nuggets - 500f"> Poulet nuggets - 500f</label><br>
+            <label><input type="checkbox" name="suppléments" value="Fromage - 300f"> Fromage - 300f</label>
+        </div>
+
+        <h2>Sauces</h2>
+        <div class="menu">
+            <label><input type="radio" name="sauce" value="Sauce TAKIBIGGY"> Sauce TAKIBIGGY</label><br>
+            <label><input type="radio" name="sauce" value="Mayonnaise"> Mayonnaise</label><br>
+            <label><input type="radio" name="sauce" value="Sauce curry"> Sauce curry</label><br>
+            <label><input type="radio" name="sauce" value="Ketchup"> Ketchup</label>
+        </div>
+
+        <div class="form-container">
+            <h2>Votre adresse e-mail</h2>
+            <input type="email" id="email" placeholder="Entrez votre e-mail" required><br>
+            <button onclick="submitOrder()">Soumettre la commande</button>
+        </div>
+<h2>Laissez un commentaire</h2>
+        <div class="comments-container">
+            <textarea id="comment" placeholder="Écrivez votre commentaire ici..."></textarea><br>
+            <button onclick="submitComment()">Envoyer le commentaire</button>
+        </div>
+        
+        <div class="comments-section" id="commentsSection">
+            <h3>Commentaires précédents :</h3>
+        </div>
+
+        <h2>Commandes</h2>
+        <div class="orders-section" id="ordersSection">
+            <h3>Commandes en cours :</h3>
+            <div class="order-count" id="orderCount">Total des commandes : 0</div>
+        </div>
+    </section>
+    <div class="contact">
+        <p>Contactez-nous au : 655087383 / 651432005</p>
+    </div>
+    <footer>
+        <p># NO EXCUSE TO GET YOUR TACOS</p>
+    </footer>
+
+    <script>
+        const comments = [];
+        const orders = [];
+
+        function notifyNewOrder(orderDetails) {
+            if (Notification.permission === "granted") {
+                new Notification("Nouvelle commande!", {
+                    body: orderDetails,
+                    icon: 'https://via.placeholder.com/50' // Remplacez par l'URL de votre icône
+                });
+            } else if (Notification.permission === "denied") {
+                alert("Les notifications sont désactivées. Veuillez les activer dans les paramètres de votre navigateur.");
+            } else {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        new Notification("Nouvelle commande!", {
+                            body: orderDetails,
+                            icon: 'https://via.placeholder.com/50'
+                        });
+                    } else {
+                        alert("Les notifications sont désactivées. Veuillez les activer dans les paramètres de votre navigateur.");
+                    }
+                });
+            }
+        }
+
+        function submitOrder() {
+            const email = document.getElementById('email').value;
+            const menu = document.querySelector('input[name="menu"]:checked');
+            const suppléments = Array.from(document.querySelectorAll('input[name="suppléments"]:checked')).map(el => el.value);
+            const sauce = document.querySelector('input[name="sauce"]:checked');
+
+            if (!menu || !sauce) {
+                alert("Veuillez sélectionner un menu et une sauce.");
+                return;
+            }
+
+            const date = new Date();
+            const formattedDate = date.toLocaleString('fr-FR');
+
+            let orderDetails = Commande : ${menu.value}, Sauce : ${sauce.value};
+            let totalPrice = parseInt(menu.value.split('-')[1]) || 0; // Récupérer le prix du menu
+
+            if (suppléments.length > 0) {
+                orderDetails += , Suppléments : ${suppléments.join(', ')};
+                suppléments.forEach(suppl => {
+                    totalPrice += parseInt(suppl.split('-')[1]) || 0; // Ajouter le prix des suppléments
+                });
+            }
+
+            const invoiceId = INV-${Date.now()}; // Générer un ID de facture unique
+            orders.push({ details: orderDetails, date: formattedDate, total: totalPrice, invoiceId: invoiceId, email: email });
+            displayOrders();
+            notifyNewOrder(orderDetails);
+            updateOrderCount();
+
+            // Envoyer la facture par email
+            sendInvoice(email, invoiceId, orderDetails, totalPrice);
+
+            alert(Commande soumise ! Facture ID : ${invoiceId} - Total : ${totalPrice}f);
+        }
+
+        function sendInvoice(email, invoiceId, orderDetails, totalPrice) {
+            // Remplacez l'URL par celle de votre serveur d'envoi d'e-mails
+            fetch('https://votre-serveur.com/api/send-invoice', {
+method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    invoiceId: invoiceId,
+                    orderDetails: orderDetails,
+                    totalPrice: totalPrice
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log("Facture envoyée par e-mail.");
+                } else {
+                    alert("Erreur lors de l'envoi de la facture par e-mail.");
+                }
+            })
+            .catch(error => {
+                console.error("Erreur:", error);
+                alert("Erreur lors de l'envoi de la facture par e-mail.");
+            });
+        }
+
+        function displayOrders() {
+            const ordersSection = document.getElementById('ordersSection');
+            ordersSection.innerHTML = "<h3>Commandes en cours :</h3><div class='order-count' id='orderCount'>Total des commandes : " + orders.length + "</div>";
+
+            orders.forEach(order => {
+                const orderDiv = document.createElement('div');
+                orderDiv.className = "order";
+                orderDiv.textContent = ${order.details} - ${order.date} - Total : ${order.total}f - Facture ID : ${order.invoiceId};
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = "Supprimer";
+                deleteButton.className = "delete-button";
+                deleteButton.onclick = () => deleteOrder(order.invoiceId);
+
+                orderDiv.appendChild(deleteButton);
+                ordersSection.appendChild(orderDiv);
+            });
+        }
+
+        function updateOrderCount() {
+            const orderCount = document.getElementById('orderCount');
+            orderCount.textContent = "Total des commandes : " + orders.length;
+        }
+
+        function deleteOrder(invoiceId) {
+            const index = orders.findIndex(order => order.invoiceId === invoiceId);
+            if (index !== -1) {
+                orders.splice(index, 1);
+                displayOrders();
+                updateOrderCount();
+                alert("Commande supprimée !");
+            }
+        }
+
+        function submitComment() {
+            const comment = document.getElementById('comment').value;
+            if (comment.trim() === "") {
+                alert("Veuillez écrire un commentaire.");
+                return;
+            }
+
+            const date = new Date();
+            const formattedDate = date.toLocaleString('fr-FR');
+
+            comments.push({ text: comment, date: formattedDate });
+            displayComments();
+            document.getElementById('comment').value = "";
+            alert("Merci pour votre commentaire !");
+        }
+
+        function displayComments() {
+            const commentsSection = document.getElementById('commentsSection');
+            commentsSection.innerHTML = "<h3>Commentaires précédents :</h3>";
+
+            comments.forEach(comment => {
+                const commentDiv = document.createElement('div');
+                commentDiv.className = "comment";
+                commentDiv.textContent = comment.text;
+
+                const dateDiv = document.createElement('div');
+                dateDiv.className = "comment-date";
+                dateDiv.textContent = comment.date;
+
+                commentDiv.appendChild(dateDiv);
+                commentsSection.appendChild(commentDiv);
+            });
+        }
+
+        // Demander la permission pour les notifications au chargement de la page
+        window.onload = () => {
+            if (Notification.permission === "default") {
+                Notification.requestPermission().then(permission => {
+if (permission === "denied") {
+                        alert("Les notifications sont désactivées. Veuillez les activer dans les paramètres de votre navigateur.");
+                    }
+                });
+            }
+        };
+    </script>
+</body>
+</html>
